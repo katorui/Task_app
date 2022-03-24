@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Document</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <style>
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h3>タスク管理</h3>
+    <div class="row">
+        <div class="col-8 form">
+            <input id="ajax_post" type="text" name="post_test" class="form-control">
+        </div>
+        <div class="col-4">
+            <button id="ajax_post_btn" type="submit" class="btn btn-primary">送信</button>
+        </div>
+    </div>
+    <div class="container">
+        <div class="row">
+            <div class="col-2">
+                ID
+            </div>
+            <div class="col-4">
+                タスク名
+            </div>
+            <div class="col-2">
+                <!-- 操作 -->
+            </div>
+            <div class="col-2">
+            </div>
+            <div class="col-2">
+            </div>
+        </div>
+        <div id="clone" class="row mt-1 hidden">
+            <div class="col-2 id">
+            </div>
+            <div class="col-4 task">
+            </div>
+            <div class="col-2">
+                <button class="ajax_done_btn btn btn-info done">完了</button>
+            </div>
+            <div class="col-2">
+                <button class="ajax_edit_btn btn btn-secondary edit">編集</button>
+            </div>
+            <div class="col-2">
+                <button class="ajax_delete_btn btn btn-danger delete">削除</button>
+            </div>
+        </div>
+        <div id="task_list"></div>
+    </div>
+
+    <!-- 編集モーダル -->
+    <div class="modal-container">
+        <div class="modal-body">
+            <div class="modal-content">
+                <input id="edit_form" type="text" name="post_edit" class="form-control">
+                <button id="ajax_update_btn" type="submit" class="btn btn-primary ajax_update_btn">変更する</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+
+    <script>
+    $.ajax( {
+        url: 'getTasks.php', //アクセスするURLかディレクトリ
+        type: 'get', // httpメソッドを設定
+        cache: false, //cacheを使うかどうか
+        dataType: 'json', //data type scriptなどデータタイプの指定
+    })
+    .done(function (response) { //通信が成功したときのコールバックの処理を書く
+        const tasks = response;
+        // console.log(tasks[0]['done'])
+        const task_list = $('#task_list');
+        for (let i = 0; i < tasks.length; i++) {
+            let clone = $("#clone").clone();
+            // console.log(clone)
+            // idを変更
+            clone.attr('id', tasks[i].id);
+            // 非表示を解除
+            clone.removeClass('hidden');
+            // IDを挿入
+            clone.find('.task').text(tasks[i].task_name);
+            clone.find('.id').text(tasks[i].id);
+            // console.log(tasks[i].done);
+            if (tasks[i].done == 1) {
+                clone.find('.task').addClass('through');
+                clone.find('.done').remove();
+                clone.find('.edit').remove();
+                // $('.ajax_done_btn').remove();
+            }
+            // idを付与
+            clone.find('.done').attr('data-id', tasks[i].id);
+            clone.find('.delete').attr('data-id', tasks[i].id);
+            clone.find('.edit').attr('data-id', tasks[i].id);
+            clone.find('.done').attr('id', 'done-' + tasks[i].id);
+            clone.find('.delete').attr('id', 'done-' + tasks[i].id);
+            clone.find('.edit').attr('id', 'done-' + tasks[i].id);
+            // const a = $(".ajax_done_btn");
+            task_list.append(clone);
+        }
+    })
+    .fail(function (xhr, status, error) { //通信が失敗したときのコールバックの処理を書く
+        console.log(xhr);
+        console.log(status);
+        console.log(error);
+        })
+    .always(function (xhr, msg) { //通信結果にかかわらず実行する処理を書く
+    });
+
+    // 送信ボタン押した時
+    const ajaxPostBtn = $('#ajax_post_btn'); // POST通信用のボタンを取得
+    ajaxPostBtn.on('click', function () { // ボタンにクリックイベントを付与
+          // フォームの値を取得
+        const data = $('#ajax_post').val();
+          // パラメータを設定
+        const params = {
+            "post_test": data,
+        }
+          // Ajax通信開始
+        $.ajax({
+            url: 'task_confirm.php', //アクセスするURLかディレクトリ
+            type: 'post', // httpメソッドを設定
+            cache: false, //cacheを使うかどうか
+            dataType: 'json', //data type scriptなどデータタイプの指定
+            data: params, //アクセスするときに必要なデータを 記載
+        })
+        .done(function (response) { //通信が成功したときのコールバックの処理を書く
+            console.log(response);
+        })
+        .fail(function (xhr, status, error) { //通信が失敗したときのコールバックの処理を書く
+            console.log(xhr);
+            console.log(status);
+            console.log(error);
+        })
+        .always(function (xhr, msg) { //通信結果にかかわらず実行する処理を書く
+            // console.log('終わり');
+        });
+    });
+
+    // 完了ボタン押した時
+    // documentにすることで最新の画面からクリック情報を取得できる
+    $(document).on('click', '.ajax_done_btn', function (e) {
+        // idを取得
+        const id = e.target.id;
+        // idからDomを取得
+        const done_dom = $('#' + id)
+        // Domからdataidを取得
+        const data_id = done_dom.data('id')
+        $.ajax({
+            url: 'done.php', //アクセスするURLかディレクトリ
+            type: 'get', // httpメソッドを設定
+            cache: false, //cacheを使うかどうか
+            dataType: 'json', //data type scriptなどデータタイプの指定
+            data: { //アクセスするときに必要なデータを 記載
+                "id": data_id
+            },
+        })
+        .done(function (response) { //通信が成功したときのコールバックの処理を書く
+            const test = response;
+            // リロードする
+            // window.location.reload();
+        })
+        .fail(function (xhr, status, error) { //通信が失敗したときのコールバックの処理を書く
+            console.log(xhr);
+            console.log(status);
+            console.log(error);
+        })
+        .always(function (xhr, msg) { //通信結果にかかわらず実行する処理を書く
+        });
+    })
+
+// 編集ボタン押した時
+    $(document).on('click', '.ajax_edit_btn', function (e) {
+        modal_container = $('.modal-container');
+        console.log(modal_container)
+        modal_container.addClass('active');
+        // 編集ボタンを取得
+        // const ajaxUpdateBtn = $('#ajax_update_btn');
+        // console.log(ajaxUpdateBtn)
+        // // idを取得
+        const id = e.target.id;
+        // console.log(id)
+        // // // idからDomを取得
+        const done_dom = $('#' + id)
+        // console.log(done_dom)
+        // // // Domからdataidを取得
+        const data_id = done_dom.data('id')
+        console.log(data_id)
+    })
+
+    $(document).on('click', '.ajax_update_btn', function (e) {
+        const edit_data = $('#edit_form').val();
+        // パラメータを設定
+        const params = {
+            "post_edit": edit_data,
+        }
+        // console.log(params)
+        // Ajax通信開始
+        $.ajax({
+            url: 'edit.php', //アクセスするURLかディレクトリ
+            type: 'post', // httpメソッドを設定
+            cache: false, //cacheを使うかどうか
+            dataType: 'json', //data type scriptなどデータタイプの指定
+            data: params, //アクセスするときに必要なデータを記載
+        })
+        .done(function (response) { //通信が成功したときのコールバックの処理を書く
+            console.log(response);
+        })
+        .fail(function (xhr, status, error) { //通信が失敗したときのコールバックの処理を書く
+            console.log(xhr);
+            console.log(status);
+            console.log(error);
+        })
+        .always(function (xhr, msg) { //通信結果にかかわらず実行する処理を書く
+        });
+    })
+
+// 背景押したらモーダルを閉じる
+    // $(document).on('click', '.modal-container', function (e) {
+    //     modal_container_active = $('.modal-container');
+    //     console.log(modal_container_active)
+    //     modal_container_active.removeClass('active');
+    // })
+
+    // 削除ボタンを押した時
+    $(document).on('click', '.ajax_delete_btn', function (e) {
+        if (!confirm('アイテムを削除しますか？')) {
+            // アラートがキャンセルの時
+            return false;
+        } else {
+            // アラートOKの時
+        // idを取得
+            const id = e.target.id;
+            // idからDomを取得
+            const done_dom = $('#' + id)
+            // Domからdataidを取得
+            const data_id = done_dom.data('id')
+            $.ajax({
+                url: 'delete.php', //アクセスするURLかディレクトリ
+                type: 'get', // httpメソッドを設定
+                cache: false, //cacheを使うかどうか
+                dataType: 'json', //data type scriptなどデータタイプの指定
+                data: { //アクセスするときに必要なデータを 記載
+                    "id": data_id
+                },
+            })
+            .done(function (response) { //通信が成功したときのコールバックの処理を書く
+                // console.log(response);
+                const test = response;
+                console.log(test);
+                // リロードする
+                // window.location.reload();
+            })
+            .fail(function (xhr, status, error) { //通信が失敗したときのコールバックの処理を書く
+                console.log(xhr);
+                console.log(status);
+                console.log(error);
+            })
+            .always(function (xhr, msg) { //通信結果にかかわらず実行する処理を書く
+                // console.log('終わり');
+            });
+        }
+    })
+    </script>
+</body>
+</html>
